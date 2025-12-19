@@ -19,7 +19,17 @@ app.use(express.json());
 
 // Serve static files from React app (after build)
 const reactBuildPath = path.join(__dirname, 'react', 'dealhunter-client', 'dist');
-app.use(express.static(reactBuildPath));
+console.log(`📁 React build path: ${reactBuildPath}`);
+
+// Check if dist folder exists
+const fs = require('fs');
+if (fs.existsSync(reactBuildPath)) {
+  console.log(`✅ React build found at: ${reactBuildPath}`);
+  app.use(express.static(reactBuildPath));
+} else {
+  console.warn(`⚠️  React build not found at: ${reactBuildPath}`);
+  console.warn(`⚠️  Make sure to run "npm run build" to build the React frontend`);
+}
 
 // Initialize Google AI (Gemini)
 // Make sure to set GEMINI_API_KEY in your .env file or environment variables
