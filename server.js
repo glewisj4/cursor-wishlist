@@ -12,8 +12,14 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 const app = express();
+const path = require('path');
+
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from React app (after build)
+const reactBuildPath = path.join(__dirname, 'react', 'dealhunter-client', 'dist');
+app.use(express.static(reactBuildPath));
 
 // Initialize Google AI (Gemini)
 // Make sure to set GEMINI_API_KEY in your .env file or environment variables
@@ -893,6 +899,31 @@ app.get('/', (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Serve React app for all non-API routes (SPA fallback)
+app.get('*', (req, res) => {
+  // Don't serve React app for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  // Serve React app's index.html for all other routes
+  res.sendFile(path.join(reactBuildPath, 'index.html'), (err) => {
+    if (err) {
+      // If React app isn't built yet, show API info
+      res.json({ 
+        status: 'online',
+        service: 'DealHunter API',
+        note: 'React frontend not built. Run "npm run build" to build the frontend.',
+        endpoints: {
+          extract: '/api/extract',
+          checkPrice: '/api/check-price',
+          getImages: '/api/get-images',
+          searchProduct: '/api/search-product'
+        }
+      });
+    }
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

@@ -87,7 +87,10 @@ export default function App() {
   const [isSearching, setIsSearching] = useState({}); // { itemId: true/false }
   
   // Infrastructure Configuration
-  const [backendUrl, setBackendUrl] = useState('http://localhost:3001'); // Default local
+  // Use environment variable or default to relative path (same origin) for production
+  const defaultBackendUrl = import.meta.env.VITE_BACKEND_URL || 
+    (window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
+  const [backendUrl, setBackendUrl] = useState(defaultBackendUrl);
 
   // Form State
   const [newItem, setNewItem] = useState({
