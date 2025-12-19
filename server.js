@@ -26,14 +26,23 @@ async function scrapePageContent(url) {
   let browser;
   try {
     console.log(`🌐 Launching browser for: ${url}`);
+    // Puppeteer configuration for Render.com
+    const puppeteerArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--disable-extensions'
+    ];
+    
+    // Use system Chromium on Render if available
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    
     browser = await puppeteer.launch({
       headless: "new",
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage', // Helps with memory issues
-        '--disable-gpu' // Helps on some systems
-      ]
+      executablePath: executablePath,
+      args: puppeteerArgs
     });
     console.log("✅ Browser launched successfully");
     
