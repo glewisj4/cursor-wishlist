@@ -263,7 +263,8 @@ export default function App() {
 
       try {
         // CALL THE REAL BACKEND
-        const response = await fetch(`${backendUrl}/api/check-price`, {
+        const apiUrl = backendUrl ? `${backendUrl}/api/check-price` : '/api/check-price';
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: item.url, currentPrice: item.originalPrice })
@@ -368,7 +369,8 @@ export default function App() {
       console.log(`📡 Backend URL: ${backendUrl}`);
       
       // CALL THE REAL BACKEND
-      const response = await fetch(`${backendUrl}/api/extract`, {
+      const apiUrl = backendUrl ? `${backendUrl}/api/extract` : '/api/extract';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: newItem.url })
@@ -484,7 +486,8 @@ export default function App() {
     setAlerts(prev => [...prev, { id: Date.now(), msg: "🔄 Fetching alternative images...", type: 'info', autoClose: true }]);
 
     try {
-      const response = await fetch(`${backendUrl}/api/get-images`, {
+      const apiUrl = backendUrl ? `${backendUrl}/api/get-images` : '/api/get-images';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: newItem.url })
@@ -542,7 +545,8 @@ export default function App() {
     setAlerts(prev => [...prev, { id: Date.now(), msg: `🔍 Searching for "${item.name}" across retailers...`, type: 'info', autoClose: true }]);
 
     try {
-      const response = await fetch(`${backendUrl}/api/search-product`, {
+      const apiUrl = backendUrl ? `${backendUrl}/api/search-product` : '/api/search-product';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productName: item.name, currentStore: item.store })
