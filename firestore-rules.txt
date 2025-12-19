@@ -1,0 +1,28 @@
+// Firestore Security Rules for DealHunter App
+// Copy and paste these rules into your Firebase Console
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow access to artifacts collection
+    match /artifacts/{appId} {
+      // Allow read/write to public data for authenticated users (including anonymous)
+      match /public/data/wishlist_items/{itemId} {
+        allow read, write: if request.auth != null;
+      }
+      
+      // Allow access to all subcollections under public/data
+      match /public/data/{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Fallback: Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
