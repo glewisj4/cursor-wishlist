@@ -882,32 +882,20 @@ app.post('/api/check-price', async (req, res) => {
   }
 });
 
-// Add a root route for health check
-app.get('/', (req, res) => {
-  res.json({ 
-    status: 'online',
-    service: 'DealHunter API',
-    endpoints: {
-      extract: '/api/extract',
-      checkPrice: '/api/check-price',
-      getImages: '/api/get-images',
-      searchProduct: '/api/search-product'
-    }
-  });
-});
-
-// Health check endpoint
+// Health check endpoint (before React app middleware)
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // Serve React app for all non-API routes (SPA fallback)
 // Use app.use() instead of app.get('*') for Express 5 compatibility
+// This must be placed AFTER all API routes
 app.use((req, res, next) => {
-  // Don't serve React app for API routes
-  if (req.path.startsWith('/api/')) {
-    return next(); // Let API routes be handled by their specific routes
+  // Skip API routes and health check - they're handled above
+  if (req.path.startsWith('/api/') || req.path === '/health') {
+    return next(); // Continue to next middleware (which will 404 if route not found)
   }
+  
   // Serve React app's index.html for all other routes
   res.sendFile(path.join(reactBuildPath, 'index.html'), (err) => {
     if (err) {
