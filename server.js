@@ -876,9 +876,28 @@ app.post('/api/check-price', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+// Add a root route for health check
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'online',
+    service: 'DealHunter API',
+    endpoints: {
+      extract: '/api/extract',
+      checkPrice: '/api/check-price',
+      getImages: '/api/get-images',
+      searchProduct: '/api/search-product'
+    }
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Agentic Backend running on port ${PORT}`);
-  console.log(`📡 API endpoint: http://localhost:${PORT}/api/extract`);
+  console.log(`📡 API endpoint: http://0.0.0.0:${PORT}/api/extract`);
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
     console.log(`⚠️  GEMINI_API_KEY not configured - will use fallback extraction`);
   } else {
