@@ -37,29 +37,75 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY
 
 const PORT = process.env.PORT || 3001;
 
+// --- HELPER: Launch Browser with fallback options ---
+async function launchBrowser() {
+  const puppeteerArgs = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--disable-software-rasterizer',
+    '--disable-extensions',
+    '--single-process' // Helps on Render
+  ];
+  
+  // Try multiple executable paths
+  const possiblePaths = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable'
+  ].filter(Boolean);
+  
+  // Try with executable path first
+  for (const executablePath of possiblePaths) {
+    try {
+      const fs = require('fs');
+      if (fs.existsSync(executablePath)) {
+        console.log(`🔍 Trying Chrome at: ${executablePath}`);
+        return await puppeteer.launch({
+          headless: "new",
+          executablePath: executablePath,
+          args: puppeteerArgs
+        });
+      }
+    } catch (error) {
+      console.log(`⚠️  Failed to use ${executablePath}: ${error.message}`);
+      continue;
+    }
+  }
+  
+  // Fallback: Let Puppeteer use its bundled Chrome
+  console.log(`🔍 Using Puppeteer's bundled Chrome`);
+  try {
+    // Set cache directory if not already set (for Render)
+    if (!process.env.PUPPETEER_CACHE_DIR) {
+      process.env.PUPPETEER_CACHE_DIR = process.env.HOME 
+        ? `${process.env.HOME}/.cache/puppeteer` 
+        : '/tmp/.cache/puppeteer';
+    }
+    
+    return await puppeteer.launch({
+      headless: "new",
+      args: puppeteerArgs
+    });
+  } catch (error) {
+    console.error(`❌ Failed to launch browser: ${error.message}`);
+    // If Chrome download is needed, provide helpful error message
+    if (error.message.includes('Could not find Chrome')) {
+      console.error(`💡 Try running: npx puppeteer browsers install chrome`);
+    }
+    throw error;
+  }
+}
+
 // --- HELPER: Agentic Browser ---
 async function scrapePageContent(url) {
   let browser;
   try {
     console.log(`🌐 Launching browser for: ${url}`);
-    // Puppeteer configuration for Render.com
-    const puppeteerArgs = [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--disable-software-rasterizer',
-      '--disable-extensions'
-    ];
-    
-    // Use system Chromium on Render if available
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
-    
-    browser = await puppeteer.launch({
-      headless: "new",
-      executablePath: executablePath,
-      args: puppeteerArgs
-    });
+    browser = await launchBrowser();
     console.log("✅ Browser launched successfully");
     
     const page = await browser.newPage();
@@ -618,10 +664,7 @@ app.post('/api/search-product', async (req, res) => {
     let browser;
 
     try {
-      browser = await puppeteer.launch({
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-      });
+      browser = await launchBrowser();
 
       const page = await browser.newPage();
       await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');

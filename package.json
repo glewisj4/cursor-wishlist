@@ -7,9 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "cd react/dealhunter-client && npm ci && npm run build",
     "build:react": "cd react/dealhunter-client && npm ci && npm run build",
+    "install:chrome": "npx puppeteer browsers install chrome || echo 'Chrome installation skipped'",
     "start": "node server.js",
     "dev": "node server.js",
-    "postinstall": "cd react/dealhunter-client && npm install && npm run build"
+    "postinstall": "npm run install:chrome && cd react/dealhunter-client && npm install && npm run build"
   },
   "keywords": [],
   "author": "",
