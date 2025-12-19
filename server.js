@@ -902,10 +902,11 @@ app.get('/health', (req, res) => {
 });
 
 // Serve React app for all non-API routes (SPA fallback)
-app.get('*', (req, res) => {
+// Use app.use() instead of app.get('*') for Express 5 compatibility
+app.use((req, res, next) => {
   // Don't serve React app for API routes
   if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
+    return next(); // Let API routes be handled by their specific routes
   }
   // Serve React app's index.html for all other routes
   res.sendFile(path.join(reactBuildPath, 'index.html'), (err) => {
