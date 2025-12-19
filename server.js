@@ -897,13 +897,17 @@ app.use((req, res, next) => {
   }
   
   // Serve React app's index.html for all other routes
-  res.sendFile(path.join(reactBuildPath, 'index.html'), (err) => {
+  const indexPath = path.join(reactBuildPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
     if (err) {
+      console.error(`❌ Error serving React app: ${err.message}`);
+      console.error(`📁 Looking for: ${indexPath}`);
       // If React app isn't built yet, show API info
       res.json({ 
         status: 'online',
         service: 'DealHunter API',
-        note: 'React frontend not built. Run "npm run build" to build the frontend.',
+        note: 'React frontend not built. Build path: ' + reactBuildPath,
+        error: err.message,
         endpoints: {
           extract: '/api/extract',
           checkPrice: '/api/check-price',
