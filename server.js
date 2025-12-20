@@ -79,11 +79,16 @@ async function launchBrowser() {
   // Fallback: Let Puppeteer use its bundled Chrome
   console.log(`🔍 Using Puppeteer's bundled Chrome`);
   try {
-    // Set cache directory if not already set (for Render)
-    if (!process.env.PUPPETEER_CACHE_DIR) {
-      process.env.PUPPETEER_CACHE_DIR = process.env.HOME 
-        ? `${process.env.HOME}/.cache/puppeteer` 
-        : '/tmp/.cache/puppeteer';
+    // Ensure cache directory exists (for Render)
+    const fs = require('fs');
+    const cacheDir = process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer';
+    if (!fs.existsSync(cacheDir)) {
+      try {
+        fs.mkdirSync(cacheDir, { recursive: true });
+        console.log(`📁 Created cache directory: ${cacheDir}`);
+      } catch (mkdirError) {
+        console.warn(`⚠️  Could not create cache directory: ${mkdirError.message}`);
+      }
     }
     
     return await puppeteer.launch({
@@ -94,6 +99,7 @@ async function launchBrowser() {
     console.error(`❌ Failed to launch browser: ${error.message}`);
     // If Chrome download is needed, provide helpful error message
     if (error.message.includes('Could not find Chrome')) {
+      console.error(`💡 Chrome not found. Cache dir: ${process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer'}`);
       console.error(`💡 Try running: npx puppeteer browsers install chrome`);
     }
     throw error;
