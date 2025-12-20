@@ -108,6 +108,140 @@ async function launchBrowser() {
   }
 }
 
+// --- HELPER: Simple HTTP Fetch (Fallback when Puppeteer fails) ---
+async function scrapePageContentSimple(url) {
+  try {
+    console.log(`🌐 Fetching page content via HTTP (no browser): ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    const data = {
+      title: '',
+      price: '',
+      availability: 'In Stock',
+      image: '',
+      description: ''
+    };
+    
+    // Extract title
+    const titleSelectors = [
+      '#productTitle',
+      'h1.a-size-large',
+      'h1[data-automation-id="title"]',
+      '.product-title',
+      'h1',
+      '[data-testid="product-title"]',
+      'title'
+    ];
+    
+    for (const selector of titleSelectors) {
+      const element = $(selector).first();
+      if (element.length && element.text().trim()) {
+        data.title = element.text().trim();
+        break;
+      }
+    }
+    
+    // Extract price
+    const priceSelectors = [
+      '.a-price .a-offscreen',
+      '#priceblock_ourprice',
+      '#priceblock_dealprice',
+      '.a-price-whole',
+      '[data-automation-id="price"]',
+      '.product-price',
+      '.price',
+      '[itemprop="price"]'
+    ];
+    
+    for (const selector of priceSelectors) {
+      const element = $(selector).first();
+      if (element.length) {
+        const priceText = element.text().trim() || element.attr('content') || '';
+        const priceMatch = priceText.match(/(\d+\.?\d*)/);
+        if (priceMatch) {
+          data.price = priceMatch[1];
+          break;
+        }
+      }
+    }
+    
+    // Extract image
+    const imageSelectors = [
+      '#landingImage',
+      '#imgBlkFront',
+      '.a-dynamic-image',
+      'img[data-automation-id="product-image"]',
+      '.product-image img',
+      'img[src*="product"]'
+    ];
+    
+    for (const selector of imageSelectors) {
+      const element = $(selector).first();
+      if (element.length) {
+        const src = element.attr('src') || element.attr('data-src');
+        if (src && !src.includes('sprite') && !src.includes('logo')) {
+          data.image = src;
+          break;
+        }
+      }
+    }
+    
+    // Extract description
+    const descSelectors = [
+      '#feature-bullets',
+      '#productDescription',
+      '.product-description',
+      '[data-automation-id="product-description"]'
+    ];
+    
+    for (const selector of descSelectors) {
+      const element = $(selector).first();
+      if (element.length && element.text().trim()) {
+        data.description = element.text().trim().substring(0, 5000);
+        break;
+      }
+    }
+    
+    if (!data.description) {
+      data.description = $('body').text().substring(0, 10000);
+    }
+    
+    const combinedText = [
+      data.title,
+      `Price: ${data.price || 'Not found'}`,
+      `Availability: ${data.availability}`,
+      data.description
+    ].filter(Boolean).join('\n\n');
+    
+    return {
+      text: combinedText,
+      image: data.image,
+      allImages: [data.image].filter(Boolean),
+      extracted: {
+        title: data.title,
+        price: data.price,
+        availability: data.availability
+      }
+    };
+  } catch (error) {
+    console.error("❌ Simple HTTP fetch error:", error.message);
+    throw new Error(`Failed to fetch page: ${error.message}`);
+  }
+}
+
 // --- HELPER: Agentic Browser ---
 async function scrapePageContent(url) {
   let browser;
