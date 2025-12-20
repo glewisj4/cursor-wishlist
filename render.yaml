@@ -2,15 +2,15 @@ services:
   - type: web
     name: dealhunter-server
     env: node
-    buildCommand: npm install && npx puppeteer browsers install chrome && cd react/dealhunter-client && npm ci && npm run build && cd ../..
+    buildCommand: apt-get update && apt-get install -y chromium chromium-sandbox && npm install && cd react/dealhunter-client && npm ci && npm run build && cd ../..
     startCommand: npm start
     envVars:
       - key: PORT
         generateValue: true
       - key: NODE_ENV
         value: production
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "false"
+        value: "true"
 

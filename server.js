@@ -49,13 +49,14 @@ async function launchBrowser() {
     '--single-process' // Helps on Render
   ];
   
-  // Try multiple executable paths
+  // Try multiple executable paths (prioritize system Chromium)
   const possiblePaths = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome-stable',
     '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable'
+    '/usr/bin/chrome'
   ].filter(Boolean);
   
   // Try with executable path first
