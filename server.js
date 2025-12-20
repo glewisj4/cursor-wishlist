@@ -5,6 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const cheerio = require('cheerio');
 
 // Stealth Puppeteer to bypass basic anti-bot detection
 const puppeteer = require('puppeteer-extra');
@@ -483,8 +484,19 @@ async function scrapePageContent(url) {
       }
     };
   } catch (error) {
-    console.error("❌ Scraping Error:", error.message);
-    console.error("Error details:", error);
+    console.error("❌ Puppeteer scraping failed:", error.message);
+    
+    // Fallback to simple HTTP fetch if Puppeteer fails
+    if (error.message.includes('Could not find Chrome') || error.message.includes('Failed to launch browser')) {
+      console.log("⚠️  Chrome not available, using HTTP fallback mode...");
+      try {
+        return await scrapePageContentSimple(url);
+      } catch (fallbackError) {
+        console.error("❌ HTTP fallback also failed:", fallbackError.message);
+        throw new Error(`Failed to access site: ${fallbackError.message}`);
+      }
+    }
+    
     throw new Error(`Failed to access site: ${error.message}`);
   } finally {
     if (browser) {
