@@ -2,7 +2,7 @@ services:
   - type: web
     name: dealhunter-server
     env: node
-    buildCommand: apt-get update && apt-get install -y chromium chromium-sandbox && npm install && cd react/dealhunter-client && npm ci && npm run build && cd ../..
+    buildCommand: npm install && cd react/dealhunter-client && npm ci && npm run build && cd ../..
     startCommand: npm start
     envVars:
       - key: PORT
